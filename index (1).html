@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RAIO-X SINTÁTICO · PIXEL ROULETTE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;image-rendering:crisp-edges;image-rendering:pixelated}
+:root{--bg:#080d18;--panel:#0b1426;--cyan:#44ffcc;--cyan2:#aaffee;--gold:#ffdd66;--pink:#ff6699;--purple:#aa88ff;--orange:#ffaa66}
+body{background:var(--bg);font-family:'Press Start 2P',monospace;color:#b3f0ff;overflow-x:hidden;min-height:100vh}
+.pixel-bg{position:fixed;inset:0;background:repeating-linear-gradient(0deg,#0c1122 0 2px,#111827 2px 4px);z-index:0;opacity:.65;pointer-events:none}
+.pixel-scan{position:fixed;top:0;left:0;width:100%;height:8px;background:#60f0ff33;box-shadow:0 0 8px #00ffff;animation:scanMove 6s linear infinite;pointer-events:none;z-index:2}
+@keyframes scanMove{0%{top:-10px;opacity:0}20%,80%{opacity:.8}100%{top:100%;opacity:0}}
+.pixel-corner{position:fixed;width:16px;height:16px;z-index:10;pointer-events:none;border-color:#4affd0;border-style:solid}
+.tl{top:8px;left:8px;border-width:3px 0 0 3px}.tr{top:8px;right:8px;border-width:3px 3px 0 0}.bl{bottom:8px;left:8px;border-width:0 0 3px 3px}.br{bottom:8px;right:8px;border-width:0 3px 3px 0}
+button,input,select{font:inherit}
+button{color:#ccfffc}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0b1424;border:2px solid var(--cyan);padding:10px 14px;font-size:9px;color:#aafff0;z-index:3000;opacity:0;transition:.2s;white-space:nowrap;box-shadow:4px 4px #001133;pointer-events:none}
+.toast.show{opacity:1;bottom:30px}
+.config-toggle{position:fixed;top:16px;right:16px;background:#0b1322;border:2px solid #2affcc;padding:8px 12px;font-size:8px;cursor:pointer;z-index:200;box-shadow:3px 3px #001133}
+.config-panel{position:fixed;top:62px;right:16px;width:300px;max-height:calc(100vh - 80px);overflow:auto;background:#0c1022f2;backdrop-filter:blur(5px);border:3px solid #2effcc;padding:12px;z-index:201;display:none;flex-direction:column;gap:12px;box-shadow:8px 8px #0008}
+.config-panel.open{display:flex}.cfg-title{font-size:10px;border-bottom:2px dotted var(--cyan);padding-bottom:7px;color:var(--gold)}
+.cfg-card{background:#071222;border:1px solid #22ccaa;padding:9px}.cfg-label{font-size:8px;margin-bottom:6px}
+.cfg-card input[type=file]{width:100%;font-family:monospace;font-size:9px;color:#bff}.card-thumb{display:block;width:54px;height:68px;object-fit:cover;border:2px solid var(--cyan);background:#030811;margin-top:7px}
+.upload-btn,.save-config{display:inline-block;background:#111d2f;border:1px solid #44ddcc;padding:6px;font-size:7px;cursor:pointer;margin-top:5px;text-align:center;color:#aaffdd}
+.page{position:relative;z-index:5;max-width:1100px;margin:0 auto;padding:12px}
+.logo-area{text-align:center;margin:12px 0}.logo-img{max-height:80px;max-width:90%;image-rendering:pixelated;filter:drop-shadow(0 0 6px #2effcc)}
+.trail-card,.roleta-container,.panel{background:#07111ecc;border:2px solid var(--cyan);padding:12px;margin:12px 0;box-shadow:4px 4px #0006}
+.section-label{font-size:10px;letter-spacing:1px;margin-bottom:10px;display:flex;gap:8px;color:#6effe0;align-items:center}
+#trailSvg{display:block;width:100%;height:auto;min-height:130px}
+.roleta-container{border-width:3px;background:#071222cc}.roleta-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.roleta-config{display:flex;gap:7px;align-items:center;background:#0a1024;padding:6px 8px;border:1px solid #33ddbb}.roleta-config input{background:#010a18;border:1px solid cyan;color:#aaffee;width:55px;text-align:center;font-family:monospace;font-weight:bold}
+.roleta-numero-sorteado{font-size:42px;background:#030d1f;display:inline-block;padding:8px 18px;border:3px solid var(--gold);color:#ffdd88;text-shadow:2px 2px #000;letter-spacing:4px}
+.btn-pixel,.act-btn{background:#1c2a44;border:2px solid #4affcc;padding:7px 10px;font-family:'Press Start 2P',monospace;font-size:8px;cursor:pointer}.btn-pixel:hover,.act-btn:hover,.gc-btn:hover{filter:brightness(1.25)}.btn-pixel:active,.gc-btn:active{transform:translate(2px,2px)}
+.numeros-sorteados{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;border-top:1px solid #44ffcc66;padding-top:9px}.numero-sorteado-badge{background:#1f3355;border:1px solid cyan;padding:4px 7px;font-size:12px;font-family:monospace;font-weight:bold}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:12px}.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}
+.gcard{background:#0e1628;border:2px solid var(--cyan);padding:11px;box-shadow:3px 3px #000}.gc-score{font-size:28px;text-shadow:2px 2px #000}.gc-name{background:transparent;border:none;color:#ccfff0;font-family:'Press Start 2P';font-size:8px;width:105px}.gc-name:focus{background:#1f2a44;outline:none}.gc-btn{background:#1f2a3a;border:1px solid #55ffcc;font-family:monospace;font-weight:bold;padding:6px;cursor:pointer;font-size:11px}
+.emoji-picker-btn{background:#152032;border:1px solid #33ddbb;border-radius:2px;font-size:14px;cursor:pointer;width:28px}
+.sel{width:100%;background:#030c1a;border:2px solid #33ffcc;padding:7px;color:#bbffff;font-family:monospace}
+.panel{background:#0b1426cc}.act-btn{width:100%;text-align:center;margin-top:8px}.mini{font-size:7px;color:#a9ffe5;line-height:1.7}
+.powers{display:grid;gap:9px}.power-box{border:1px solid #44ffcc66;padding:7px}.pw-b{display:inline-block;border:1px solid #44ddcc;padding:5px 6px;margin:3px;font-size:7px;font-family:monospace;cursor:pointer}.pw-b.used{opacity:.28;text-decoration:line-through;pointer-events:none}
+.modal-card{position:fixed;inset:0;background:#01050cee;z-index:1000;display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.1s;backdrop-filter:blur(3px);padding:15px}.modal-card.open{visibility:visible;opacity:1}.card-popup{background:#0c1025;border:4px solid #4affdd;padding:18px;text-align:center;width:min(94vw,420px);box-shadow:10px 10px #0009}
+.card-popup img{width:180px;height:230px;object-fit:cover;border:3px solid #aaffee;image-rendering:pixelated;max-width:100%}
+.question-text{font-family:monospace;font-size:14px;line-height:1.5;margin:12px 0;text-align:left}.answer-input{background:#021022;border:2px solid cyan;color:white;padding:9px;width:100%;font-family:monospace}
+.answer-options{display:grid;gap:7px;margin-top:10px}.answer-options button{font-family:monospace;text-align:left;background:#12213a;border:1px solid #4affcc;padding:8px;cursor:pointer}
+.winner-banner{position:fixed;inset:0;background:#02060cf5;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;border:6px solid gold;text-align:center;padding:20px}.winner-banner.show{display:flex}.winner-txt{font-size:20px;color:#ffef91;margin:18px 0}
+.progress-wrap{margin-top:10px;border:1px solid #36dcb9;height:10px;background:#06101e}.progress{height:100%;width:0;background:#44ffcc;transition:.3s}
+.status-line{font-size:7px;color:#8ffff0;margin-top:7px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.config-toggle{top:8px;right:8px}.config-panel{right:8px;width:min(300px,calc(100vw - 16px))}.page{padding:8px}.roleta-numero-sorteado{font-size:30px}.btn-pixel{font-size:7px}.trail-card{overflow:hidden}#trailSvg{min-width:680px}.trail-card{overflow-x:auto}.groups-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:450px){.groups-grid{grid-template-columns:1fr}.roleta-header{justify-content:center}}
+</style>
+</head>
+<body>
+<div class="pixel-bg"></div><div class="pixel-scan"></div>
+<div class="pixel-corner tl"></div><div class="pixel-corner tr"></div><div class="pixel-corner bl"></div><div class="pixel-corner br"></div>
+<div class="toast" id="toast"></div>
+
+<button class="config-toggle" id="toggleConfig">⚙️ CONFIG</button>
+<div class="config-panel" id="configPanel">
+  <div class="cfg-title">🕹️ PERSONALIZA PIXEL</div>
+  <div class="cfg-card">
+    <div class="cfg-label">🎨 LOGO DO JOGO</div>
+    <input type="file" id="logoUpload" accept="image/*">
+    <img id="logoPreview" class="card-thumb" alt="Prévia da logo">
+  </div>
+  <div class="cfg-card">
+    <div class="cfg-label">👥 CARTA: CONSULTA GRUPO</div>
+    <input type="file" id="cardGroupUpload" accept="image/*"><img id="cardGroupImg" class="card-thumb" alt="Carta grupo">
+  </div>
+  <div class="cfg-card">
+    <div class="cfg-label">🎭 CARTA: CONSULTA ADV</div>
+    <input type="file" id="cardAdvUpload" accept="image/*"><img id="cardAdvImg" class="card-thumb" alt="Carta adversário">
+  </div>
+  <div class="cfg-card">
+    <div class="cfg-label">🃏 CARTA: CORINGA</div>
+    <input type="file" id="cardJokerUpload" accept="image/*"><img id="cardJokerImg" class="card-thumb" alt="Carta coringa">
+  </div>
+  <button class="save-config" id="saveConfigBtn">💾 SALVAR ESTILO</button>
+  <button class="save-config" id="clearConfigBtn">🧹 RESTAURAR PADRÃO</button>
+</div>
+
+<div class="page">
+  <div class="logo-area"><img id="mainLogoImg" class="logo-img" alt="Raio-X Sintático"></div>
+
+  <div class="trail-card">
+    <div class="section-label">🔍 TRILHA · 20 CASAS</div>
+    <svg id="trailSvg" viewBox="0 0 980 150" preserveAspectRatio="xMinYMin meet"></svg>
+    <div style="font-size:7px;margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+      <span>🏁 Início</span><span>⭐ Normal</span><span>🏆 Chegada</span><span>✨ Cada casa = pergunta</span>
+    </div>
+  </div>
+
+  <div class="roleta-container">
+    <div class="roleta-header">
+      <div class="roleta-config"><span style="font-size:8px">🎲 NÚMEROS:</span><input type="number" id="roletaQuantidade" min="2" max="36" value="10"><button class="btn-pixel" id="configurarRoletaBtn">⚙️ CONFIG</button></div>
+      <div class="roleta-numero-sorteado" id="numeroSorteadoDisplay">--</div>
+      <button class="btn-pixel" id="sortearBtn">🎲 SORTEAR</button><button class="btn-pixel" id="resetarRoletaBtn">🔄 RESET</button>
+    </div>
+    <div class="numeros-sorteados" id="listaSorteados"></div>
+    <div class="status-line">* Sorteio sem repetição até esgotar os números.</div>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="section-label" style="justify-content:space-between">
+        <span>🎮 GRUPOS</span>
+        <span style="display:flex;gap:5px;align-items:center"><span style="font-size:8px">QTD:</span><button class="gc-btn" onclick="changeN(-1)">−</button><span id="numVal">3</span><button class="gc-btn" onclick="changeN(1)">+</button></span>
+      </div>
+      <div id="groupsGrid" class="groups-grid"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="panel">
+        <div class="section-label">⚡ RODADA</div>
+        <label style="font-size:8px">Grupo ativo</label>
+        <select id="selG" class="sel"></select>
+        <button id="btnResponderPergunta" class="act-btn" style="background:#2b4a6e">🔎 RESPONDER PERGUNTA DA CASA</button>
+        <button id="btnUsarCarta" class="act-btn">🎴 MOSTRAR CARTA (Poder)</button>
+        <div class="rules-mini mini" style="margin-top:8px">✅ Acerto: avança 1 casa<br>❌ Erro: permanece<br>🎴 Cada poder: 1 uso por grupo</div>
+      </div>
+      <div class="panel">
+        <div class="section-label">✨ CARTAS PODER</div>
+        <div id="powersArea" class="powers"></div>
+      </div>
+      <div class="panel">
+        <div class="section-label">📊 OBJETIVO</div>
+        <div class="mini">Leve o grupo até a casa 20. A resposta precisa corresponder ao gabarito da pergunta.</div>
+        <div class="progress-wrap"><div id="globalProgress" class="progress"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-card" id="cardModal">
+  <div class="card-popup"><img id="modalCardImage" src="" alt="Carta pixel"><br><button class="btn-pixel" id="closeModalBtn" style="margin-top:12px">FECHAR</button></div>
+</div>
+
+<div class="modal-card" id="questionModal" style="z-index:1002">
+  <div class="card-popup">
+    <div class="section-label" style="justify-content:center">📖 TESTE LINGUÍSTICO</div>
+    <div id="questionText" class="question-text"></div>
+    <div id="answerArea"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button id="confirmAnswerBtn" class="btn-pixel">✅ RESPONDER</button><button id="cancelAnswerBtn" class="btn-pixel">CANCELAR</button></div>
+  </div>
+</div>
+
+<div class="winner-banner" id="winnerBanner">
+  <div style="font-size:52px">🏆</div><div class="winner-txt" id="winnerTxt"></div>
+  <button class="btn-pixel" onclick="resetGame()">NOVO JOGO</button>
+</div>
+
+<script>
+const DEFAULTS = {
+ logo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 130"><rect width="600" height="130" fill="#071222"/><text x="300" y="55" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="34" fill="#44ffcc">RAIO-X</text><text x="300" y="96" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="24" fill="#ffdd66">SINTÁTICO</text></svg>`,
+ cards:{
+  group:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#0b2430"/><rect x="12" y="12" width="276" height="376" fill="none" stroke="#66ffcc" stroke-width="8"/><text x="150" y="130" text-anchor="middle" font-size="70">👥</text><text x="150" y="220" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="23" fill="#66ffcc">CONSULTA</text><text x="150" y="255" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="23" fill="#66ffcc">GRUPO</text><text x="150" y="320" text-anchor="middle" font-family="monospace" font-size="15" fill="white">1 USO</text></svg>`,
+  adv:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#281a0b"/><rect x="12" y="12" width="276" height="376" fill="none" stroke="#ffaa44" stroke-width="8"/><text x="150" y="130" text-anchor="middle" font-size="70">🎭</text><text x="150" y="220" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="23" fill="#ffaa44">CONSULTA</text><text x="150" y="255" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="23" fill="#ffaa44">ADVERSÁRIO</text><text x="150" y="320" text-anchor="middle" font-family="monospace" font-size="15" fill="white">1 USO</text></svg>`,
+  joker:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#21122d"/><rect x="12" y="12" width="276" height="376" fill="none" stroke="#dd88ff" stroke-width="8"/><text x="150" y="135" text-anchor="middle" font-size="75">🃏</text><text x="150" y="235" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="29" fill="#dd88ff">CORINGA</text><text x="150" y="320" text-anchor="middle" font-family="monospace" font-size="15" fill="white">1 USO</text></svg>`
+ }
+};
+
+let N=3, groups=[], usedPowers=[], currentQuestionGroup=null, currentQuestion=null;
+let custom={logo:null,group:null,adv:null,joker:null};
+const groupColors=["#44ffcc","#ffaa66","#ff6699","#aa88ff","#88ffaa"];
+const emojis=["⚡","🔥","🌀","✨","💀"];
+
+const questionsDB=[
+ {q:"Qual é a função do sujeito na oração?",a:["Indicar quem pratica ou sofre a ação ou de quem se declara algo.","Indicar sempre o tempo da ação.","Modificar somente um substantivo.","Ligar duas orações."],c:0},
+ {q:"Em “A turma permaneceu silenciosa”, qual é o predicado?",a:["Verbo-nominal","Nominal","Verbal","Inexistente"],c:1},
+ {q:"Qual alternativa apresenta um adjunto adverbial?",a:["A menina estudiosa.","O livro de Maria.","Os alunos chegaram ontem.","A professora é dedicada."],c:2},
+ {q:"Qual frase está na voz passiva?",a:["Os estudantes resolveram a questão.","A questão foi resolvida pelos estudantes.","Os estudantes resolverão a questão.","Os estudantes resolvem questões."],c:1},
+ {q:"O que caracteriza um período composto?",a:["Ter apenas um verbo.","Ter duas ou mais orações.","Ter apenas um substantivo.","Não apresentar sujeito."],c:1},
+ {q:"O que é um aposto?",a:["Termo que explica, resume ou especifica outro termo.","Verbo que liga sujeito e predicativo.","Palavra que indica circunstância.","Conjunção entre orações."],c:0},
+ {q:"Qual é uma conjunção subordinativa?",a:["e","mas","porque","ou"],c:2},
+ {q:"Qual alternativa emprega corretamente “mal/mau”?",a:["Ele é mal aluno.","Ele se sentiu mau hoje.","O aluno escreveu mal a resposta.","O mau respondeu rapidamente."],c:2},
+ {q:"O que é uma oração coordenada assindética?",a:["Oração coordenada sem conjunção.","Oração subordinada substantiva.","Oração com sujeito oculto.","Oração sem verbo."],c:0},
+ {q:"O que é metonímia?",a:["Exagero intencional.","Relação de substituição por proximidade ou associação.","Repetição de sons.","Contraste de ideias."],c:1},
+ {q:"Qual frase apresenta hipérbole?",a:["Estou morrendo de fome.","O céu está azul.","A menina leu o livro.","O aluno chegou cedo."],c:0},
+ {q:"O que é um fonema?",a:["A menor unidade sonora distintiva de uma língua.","Uma letra obrigatoriamente escrita.","Um tipo de oração.","Um sinal de pontuação."],c:0},
+ {q:"O que é um dígrafo?",a:["Duas letras que representam um único fonema.","Duas palavras com sentido contrário.","Duas orações coordenadas.","Uma palavra sem vogais."],c:0},
+ {q:"O que é encontro consonantal?",a:["Duas consoantes pronunciadas em sequência, mantendo seus sons.","Duas vogais iguais.","Uma consoante entre duas vogais.","Um dígrafo obrigatório."],c:0},
+ {q:"O que é uma oração subordinada adjetiva?",a:["A que exerce função de adjetivo em relação a um termo antecedente.","A que sempre indica tempo.","A que não possui verbo.","A que substitui uma conjunção."],c:0},
+ {q:"Para que serve o acento grave em “à”?",a:["Para indicar crase, geralmente fusão de a + a.","Para marcar plural.","Para indicar voz passiva.","Para separar sujeito e predicado."],c:0},
+ {q:"O que é uma interjeição?",a:["Palavra ou expressão que manifesta emoção, reação ou estado de espírito.","Verbo que indica ação.","Termo que completa um verbo.","Pronome relativo."],c:0},
+ {q:"O que é um verbo de ligação?",a:["Verbo que relaciona o sujeito a uma característica ou estado.","Verbo que sempre indica movimento.","Verbo que exige objeto direto.","Verbo sem sujeito."],c:0},
+ {q:"O que é sujeito indeterminado?",a:["Sujeito cuja identidade não é determinada na oração.","Sujeito que sempre aparece antes do verbo.","Sujeito inexistente em qualquer contexto.","Sujeito representado por um pronome pessoal."],c:0},
+ {q:"O que é uma figura de linguagem?",a:["Recurso expressivo que produz efeitos de sentido além do uso literal comum.","Erro gramatical proposital.","Regra exclusiva de pontuação.","Tipo de sujeito."],c:0}
+];
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove("show"),2400)}
+function svgData(svg){return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg)}
+function initGroups(){groups=[];usedPowers=[];for(let i=0;i<N;i++){groups.push({name:`GRUPO ${i+1}`,pos:0,emoji:emojis[i%emojis.length]});usedPowers.push({p1:false,p2:false,p3:false})}document.getElementById("numVal").textContent=N;updateSelectors();renderAll()}
+function updateSelectors(){const s=document.getElementById("selG");s.innerHTML="";groups.forEach((g,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${g.emoji} ${g.name}`;s.appendChild(o)})}
+function changeN(delta){const novo=N+delta;if(novo>=2&&novo<=5){N=novo;initGroups();toast(`Quantidade de grupos: ${N}`)}}
+function moveGroup(idx,steps){const old=groups[idx].pos;groups[idx].pos=Math.max(0,Math.min(19,old+steps));renderAll();if(groups[idx].pos===19){document.getElementById("winnerTxt").textContent=`${groups[idx].emoji} ${groups[idx].name} chegou à casa 20!`;document.getElementById("winnerBanner").classList.add("show")}else if(steps>0)toast(`${groups[idx].emoji} ${groups[idx].name}: casa ${groups[idx].pos+1}`)}
+function renderGroupsGrid(){const grid=document.getElementById("groupsGrid");grid.innerHTML="";groups.forEach((g,i)=>{const col=groupColors[i%groupColors.length];const d=document.createElement("div");d.className="gcard";d.innerHTML=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="font-size:20px">${g.emoji}</span><input class="gc-name" value="${escapeHtml(g.name)}" aria-label="Nome do grupo"><button class="emoji-picker-btn" onclick="changeEmoji(${i})">😀</button></div><div class="gc-score" style="color:${col}">${String(g.pos+1).padStart(2,"0")}</div><div style="font-size:7px">CASA ${g.pos+1} ${g.pos===19?"🏆":""}</div><div style="display:flex;gap:5px;margin-top:7px"><button class="gc-btn" onclick="moveGroup(${i},1)">+1</button><button class="gc-btn" onclick="moveGroup(${i},-1)">−1</button></div>`;d.querySelector(".gc-name").addEventListener("change",e=>{groups[i].name=e.target.value.trim()||`GRUPO ${i+1}`;updateSelectors();renderPowersUI()});grid.appendChild(d)})}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function renderPowersUI(){const c=document.getElementById("powersArea");c.innerHTML="";const defs=[["p1","👥","CONSULTA GRUPO"],["p2","🎭","CONSULTA ADV"],["p3","🃏","CORINGA"]];defs.forEach(([id,icon,name])=>{const box=document.createElement("div");box.className="power-box";box.innerHTML=`<div style="font-size:8px">${icon} ${name}</div><div style="margin-top:3px"></div>`;const area=box.lastElementChild;groups.forEach((g,i)=>{const b=document.createElement("span");b.className="pw-b"+(usedPowers[i][id]?" used":"");b.style.borderColor=groupColors[i%groupColors.length];b.textContent=`${g.emoji} ${g.name}`;if(!usedPowers[i][id])b.onclick=()=>usePowerCard(i,id);area.appendChild(b)});c.appendChild(box)})}
+function renderTrail(){const svg=document.getElementById("trailSvg"),cols=10,CW=96,CH=68;let cells=[];for(let i=0;i<20;i++){let row=Math.floor(i/cols),col=row%2===0?i%cols:cols-1-i%cols;cells.push({cx:col*CW+CW/2+6,cy:row*CH+CH/2+10})}let html="";for(let i=0;i<19;i++){const a=cells[i],b=cells[i+1];html+=`<line x1="${a.cx}" y1="${a.cy}" x2="${b.cx}" y2="${b.cy}" stroke="#44ffcc" stroke-width="2" stroke-dasharray="4 2"/>`}cells.forEach((c,i)=>{const fill=i===0?"#44ffcc66":i===19?"#ffaa44aa":"#1a3355aa";const stroke=i===0||i===19?"#aaffff":"#44ffaa";html+=`<rect x="${c.cx-14}" y="${c.cy-14}" width="28" height="28" fill="${fill}" stroke="${stroke}" stroke-width="2" rx="3"/>`;if(i===0||i===19)html+=`<text x="${c.cx}" y="${c.cy+4}" text-anchor="middle" font-size="14">${i===0?"🚀":"🏆"}</text>`});groups.forEach((g,gi)=>{const p=cells[g.pos],ox=-10+gi*7,oy=-14+gi*5;html+=`<circle cx="${p.cx+ox}" cy="${p.cy+oy}" r="11" fill="${groupColors[gi%groupColors.length]}" stroke="#000" stroke-width="2"/><text x="${p.cx+ox}" y="${p.cy+oy+4}" text-anchor="middle" font-size="11">${g.emoji}</text>`});svg.innerHTML=html}
+function renderAll(){renderGroupsGrid();renderPowersUI();renderTrail();const avg=groups.length?groups.reduce((s,g)=>s+g.pos,0)/(groups.length*19):0;document.getElementById("globalProgress").style.width=`${Math.min(100,avg*100)}%`}
+function changeEmoji(idx){const e=prompt("Digite um emoji para o grupo:",groups[idx].emoji);if(e&&e.trim()){groups[idx].emoji=e.trim();updateSelectors();renderAll()}}
+function showCardPopup(type){const src=custom[type]||svgData(DEFAULTS.cards[type]);document.getElementById("modalCardImage").src=src;document.getElementById("cardModal").classList.add("open")}
+function usePowerCard(groupIdx,powerId){if(usedPowers[groupIdx][powerId])return toast("Poder já utilizado!");usedPowers[groupIdx][powerId]=true;const type=powerId==="p1"?"group":powerId==="p2"?"adv":"joker";showCardPopup(type);toast(`${groups[groupIdx].emoji} usou ${type==="group"?"Consulta Grupo":type==="adv"?"Consulta Adversário":"Coringa"}`);renderPowersUI()}
+function askHouseQuestion(idx){if(groups[idx].pos===19)return toast("Grupo já venceu!");currentQuestionGroup=idx;currentQuestion=questionsDB[groups[idx].pos%questionsDB.length];document.getElementById("questionText").textContent=`${groups[idx].emoji} ${groups[idx].name} — Casa ${groups[idx].pos+1}\n\n${currentQuestion.q}`;const area=document.getElementById("answerArea");area.innerHTML=`<div class="answer-options">${currentQuestion.a.map((a,i)=>`<button data-i="${i}">${String.fromCharCode(65+i)}) ${escapeHtml(a)}</button>`).join("")}</div>`;area.querySelectorAll("button").forEach(b=>b.onclick=()=>{area.dataset.selected=b.dataset.i;area.querySelectorAll("button").forEach(x=>x.style.outline="");b.style.outline="2px solid #ffdd66"});document.getElementById("questionModal").classList.add("open")}
+function submitAnswer(){const area=document.getElementById("answerArea"),chosen=Number(area.dataset.selected);if(Number.isNaN(chosen)){toast("Selecione uma resposta.");return}const idx=currentQuestionGroup;if(chosen===currentQuestion.c){moveGroup(idx,1);toast("✅ ACERTOU! Avançou 1 casa.");}else toast(`❌ INCORRETO. A resposta correta é ${String.fromCharCode(65+currentQuestion.c)}.`);closeQuestion()}
+function closeQuestion(){document.getElementById("questionModal").classList.remove("open");currentQuestionGroup=null;currentQuestion=null}
+let roletaNumeros=[],numerosSorteados=[],quantidadeAtual=10;
+function configurarRoleta(){let q=parseInt(document.getElementById("roletaQuantidade").value);if(isNaN(q)||q<2)q=2;if(q>36)q=36;quantidadeAtual=q;document.getElementById("roletaQuantidade").value=q;roletaNumeros=Array.from({length:q},(_,i)=>i+1);numerosSorteados=[];atualizarInterfaceRoleta();toast(`Roleta configurada: 1 a ${q}`)}
+function sortearNumero(){if(!roletaNumeros.length)return toast("🎲 Todos os números já foram sorteados!");const ri=Math.floor(Math.random()*roletaNumeros.length),n=roletaNumeros.splice(ri,1)[0];numerosSorteados.push(n);document.getElementById("numeroSorteadoDisplay").textContent=String(n).padStart(2,"0");atualizarListaSorteados();toast(`🎲 Número sorteado: ${n}`)}
+function resetarRoleta(){roletaNumeros=Array.from({length:quantidadeAtual},(_,i)=>i+1);numerosSorteados=[];document.getElementById("numeroSorteadoDisplay").textContent="--";atualizarListaSorteados();toast("Roleta resetada!")}
+function atualizarListaSorteados(){document.getElementById("listaSorteados").innerHTML=numerosSorteados.length?numerosSorteados.map(n=>`<span class="numero-sorteado-badge">${String(n).padStart(2,"0")}</span>`).join(""):'<span style="font-size:8px">Nenhum número sorteado ainda</span>'}
+function atualizarInterfaceRoleta(){document.getElementById("numeroSorteadoDisplay").textContent="--";atualizarListaSorteados()}
+function resetGame(){document.getElementById("winnerBanner").classList.remove("show");groups.forEach(g=>g.pos=0);usedPowers=groups.map(()=>({p1:false,p2:false,p3:false}));renderAll();toast("Jogo reiniciado!")}
+function setupUpload(inputId,key,previewId,mainId){document.getElementById(inputId).addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{custom[key]=reader.result;document.getElementById(previewId).src=reader.result;if(mainId)document.getElementById(mainId).src=reader.result;toast("Imagem atualizada!");};reader.readAsDataURL(f)})}
+function loadConfig(){try{const saved=JSON.parse(localStorage.getItem("raioXConfig")||"{}");custom={...custom,...saved};if(custom.logo)document.getElementById("mainLogoImg").src=custom.logo;if(custom.logo)document.getElementById("logoPreview").src=custom.logo;["group","adv","joker"].forEach(k=>{if(custom[k])document.getElementById("card"+k.charAt(0).toUpperCase()+k.slice(1)+"Img").src=custom[k]})}catch(e){}}
+document.getElementById("mainLogoImg").src=svgData(DEFAULTS.logo);document.getElementById("logoPreview").src=svgData(DEFAULTS.logo);document.getElementById("cardGroupImg").src=svgData(DEFAULTS.cards.group);document.getElementById("cardAdvImg").src=svgData(DEFAULTS.cards.adv);document.getElementById("cardJokerImg").src=svgData(DEFAULTS.cards.joker);
+setupUpload("logoUpload","logo","logoPreview","mainLogoImg");setupUpload("cardGroupUpload","group","cardGroupImg",null);setupUpload("cardAdvUpload","adv","cardAdvImg",null);setupUpload("cardJokerUpload","joker","cardJokerImg",null);
+document.getElementById("saveConfigBtn").onclick=()=>{try{localStorage.setItem("raioXConfig",JSON.stringify(custom));toast("💾 Estilo salvo neste navegador!")}catch(e){toast("Não foi possível salvar: imagens muito grandes.")}};
+document.getElementById("clearConfigBtn").onclick=()=>{localStorage.removeItem("raioXConfig");location.reload()};
+document.getElementById("toggleConfig").onclick=()=>document.getElementById("configPanel").classList.toggle("open");
+document.getElementById("configurarRoletaBtn").onclick=configurarRoleta;document.getElementById("sortearBtn").onclick=sortearNumero;document.getElementById("resetarRoletaBtn").onclick=resetarRoleta;
+document.getElementById("btnResponderPergunta").onclick=()=>{const i=Number(document.getElementById("selG").value);if(!Number.isNaN(i))askHouseQuestion(i)};
+document.getElementById("btnUsarCarta").onclick=()=>{const i=Number(document.getElementById("selG").value);const p=prompt("Escolha a carta:\n1 — Consulta Grupo\n2 — Consulta Adversário\n3 — Coringa","1");if(!["1","2","3"].includes(p))return toast("Opção inválida");usePowerCard(i,`p${p}`)};
+document.getElementById("confirmAnswerBtn").onclick=submitAnswer;document.getElementById("cancelAnswerBtn").onclick=closeQuestion;document.getElementById("closeModalBtn").onclick=()=>document.getElementById("cardModal").classList.remove("open");
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("cardModal").classList.remove("open");closeQuestion();document.getElementById("configPanel").classList.remove("open")}});
+
+loadConfig();initGroups();configurarRoleta();
+</script>
+</body>
+</html>
